@@ -1,9 +1,9 @@
 {
-    "backend/bots.py":  "b30a255e36de77192197fbcd75e2ad95e7e5bc74f6f334bcf602d8ed142a9fe1",
-    "backend/maps.py":  "2d98a8869887f526d78dfcdd41b725418bf25863bf3abd8a823eebbb41331d09",
-    "client/aces.vromfs.bin":  "1fb24dbf1ba27bea8e0acb11781e4e9a00270221ec53fa4cb98d31f80ea67979",
-    "client/game.vromfs.bin":  "71ee474f3432d402a2e258b557f9d0240f27f5986feb4090fb67dacbb681b3b0",
-    "client/gui.vromfs.bin":  "a0309c28820be7092b54f96b95f795d94d011b8b3341af1aaa1dd02c9f40df72",
-    "data/client-build.json":  "339aad3ac335e84d980cb57f96c1d1c8d87147431f1cf3813abdec4a2f1f0d1f",
-    "data/mode-worlds/catalog.json":  "65ce806077b0a1992921c5173ddfdc0f2f51d10ae7f8db9415ef1cb7960e4464"
+  "backend/bots.py": "16d23aaf3892cf0dbd3009dd447d8938698130f1e1b4488137b4e945c44e0689",
+  "backend/maps.py": "2d98a8869887f526d78dfcdd41b725418bf25863bf3abd8a823eebbb41331d09",
+  "client/aces.vromfs.bin": "4b63ac2e30c52df3ac686486b1a0ca37225dfc5c18ceeb306877365232b96867",
+  "client/game.vromfs.bin": "2884c91885d28ddc7fa92e793799ff8713f4360b5d5e148894f4172731c5e7be",
+  "client/gui.vromfs.bin": "680a5eb37fb773dbe26404b3d8e3e19b1b185abb0d73eda5b01e063b54a57dd7",
+  "data/client-build.json": "9e6627763f14c0d92344e5eb0aeec3e45faa2468f395971c9e3b634e093cfc80",
+  "data/mode-worlds/catalog.json": "14c8267f9a1348e716a4dad9604612212e3ed463cc506a78814ab951bfb5567f"
 }

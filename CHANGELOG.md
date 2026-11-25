@@ -1,5 +1,79 @@
 # 更新日志
 
+## 1.0.2 — 2026-11-25
+
+对应客户端 2.59.0.92。本版集中修**街机空战**：AI 看不见、不重生、不交战、
+满地图乱飞、以及基地轰炸掉分这几个问题。`gui` / `aces` / `game` 三个归档
+与 `backend/bots.py`、`data/mode-worlds/catalog.json` 均有变化。
+
+### 计分板看不到 AI（连锁三个现象的总根因）
+
+游戏给**飞机**生成的实体名是 `<actor>_0`（日志实测 `mission_name:enemy_1_0`），
+而 AI 名单里记的是 `enemy_1`。`combat.nut` 只给历史空战和守卫模式登记过这种别名，
+街机空战的 AI 因此被整条过滤掉，一个原因带出三个现象：
+
+- TAB 计分板只有玩家自己，看不到双方 AI 的击毁/死亡/助攻/分数；
+- 阵亡事件里查不到行，AI 永远不申请下一架飞机（"AI 打光就不出飞机"）；
+- 按队统计的活体数恒为 0，"把对面打光就结束"永远判不出来。
+
+现在所有模式统一登记 `<actor>` 与 `<actor>_0` 两个别名。
+
+### AI 不出飞机、只绕圈、不交战
+
+- **出生别名缺失**：街机地图没有 `t1_air_spawn_arcade` 这种区，
+  只有原版出生标记（`t1_fighters_spawn(_huge)` / `top_t2_air_spawn` /
+  `t1_fighters_spawn_near|middle`）。补上 `bot_air_spawn_<side>` 与
+  `bot_bomber_spawn_<side>`，否则 AI 阵亡后拿不到本方空域直接放弃重生。
+- **没有攻击任务**：街机空战原先只下发一条 `unitMoveTo(battle_center)`，
+  飞行员只会飞到中心盘旋。现在补齐 `unitSetProperties` + 航线，
+  并去掉空战的固定 250km/h 速度指令（喷气机在该速度接近失速，只能压坡度盘旋）。
+- **重生不带任务**：`changeUnit` 换出的新实体不会重放 `battle_start` 的动作，
+  阵亡重生时必须单独补一次攻击任务。
+
+### AI 越打越远（本轮改了三版才收敛）
+
+1. 一开始 AI 的攻击目标是 `bot_air_targets_<敌方>`，这个小队的**队形中心等于对方
+   出生点**（48km 图离中心 24km），原生飞行员追着最近的敌机一路飞过去；
+2. 加过 15km 半径回拉，但 AI 出生点本身离中心 24km，全队一出生就判出界，
+   每 3 秒重发一次 `unitMoveTo`（而它会覆盖攻击任务），
+   实测 8 分钟 2524 次召回、只有 22 个击杀；
+3. 最终做法：**AI 只打空战、航线固定 `battle_center`、不下发 `unitAttackTarget`**
+   （靠 `targetAir + fire_at_will` 让原生飞行员自主索敌），
+   再加 13km 交战圈——并且带"进过圈才武装"的锁（`airLeashArmed`），
+   出生途中不干预，进圈后飞出才拉回。
+
+同时取消了 20% "前压机"与 AI 的 CAS/炸区角色（原先会出现 F-16 挂格斗弹炸基地）。
+
+### 撞山、擦地坠毁
+
+街机空战的飞行组件原先只对历史空战赋值，街机保持 `units.blk` 默认的 `no`，
+DAS 的地形预判一进来就 `return`，AI 完全没有地形规避。现在街机也打开
+`airSafetyEnabled`，按实际速度做 0/4/8/12/20 秒前向走廊采样。
+
+### 轰炸基地掉分 / 掉票
+
+- 新增 `observeArcadeBombing()`：每秒读轰炸区血量，玩家伤害按实际投弹吨位折算分数，
+  AI 伤害归属到对应行；摧毁时给固定分。
+- 基地被打掉后等 2 秒核对原生有没有扣票，没扣就自己按原版 5% 扣（机场 100%）。
+- 街机补上 `mission.gt_mp_tickets = true`（以前只有历史空战设置，
+  导致扣票调用在 builder 场次里空转）与 `allowEmptyTeams = true`
+  （否则十分钟后按"对面没有真人"直接判负）。
+
+### 街机空战地图池
+
+`data/mode-worlds/catalog.json` 的街机空战条目从 36 条（只收了 `arcade/gsn`
+一族二战小图）扩到 **93 条**，并按出生点间距分档：BR 7.8–15 只收 43–48km 的大地图
+（Falklands、Vietnam、Israel、Kamchatka 等 18 张），顶喷不再被分到 Stalingrad、Mozdok
+这种小图。只替换街机条目，海图/陆战的历史修订原样保留。
+
+### 工具与防护
+
+- `tools/Smoke-Boot.ps1`：启动级冒烟测试，起服务 → 拉客户端 → 解码日志 →
+  检查 Squirrel 编译错误，退出码可直接接 CI。
+- 新增静态检查：`lint_nut.py` 补三种检查、`check_dup_locals.py`（作用域重名）、
+  `check_tm_index.py`（DataBlock 矩阵误用 `tm[3][n]`）——这三类都实际造成过黑屏或
+  "任务未能启动"。
+
 ## 1.0.1 — 2026-11-24
 
 对应客户端 2.59.0.92。只改了 `game.vromfs.bin`（AI 行为）与 `data/client-build.json`，
